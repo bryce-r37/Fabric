@@ -1,7 +1,7 @@
 /************************************************
  *
  * Author: Bryce Robinson
- * Assignment: Program 3
+ * Assignment: Program 4
  * Class: CSI 4321
  *
  ************************************************/
