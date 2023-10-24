@@ -101,6 +101,11 @@ public class Server extends MessageSender {
                     "<thread pool size> <password filename>");
             System.exit(1);
         }
+        if (Integer.parseInt(args[1]) < 1) {
+            logger.severe(() -> "Unable to start: Invalid number of threads " +
+                    Integer.parseInt(args[1]));
+            System.exit(1);
+        }
 
         // Password file read
         try {
@@ -316,11 +321,11 @@ public class Server extends MessageSender {
         if (m instanceof fabric.serialization.Knowp) {
             // update user sequence number and write Knowp to output
             users.update(userID);
-            y.update(userID + ": Knowp " +
+            y.update(userID + ": KNOWP " +
                     users.getSequence(userID));
         } else {
             // write Bout to output
-            y.updateWithImage(userID + ": LtsRL #" +
+            y.updateWithImage(userID + ": BOUT #" +
                     ((Bout) m).getCategory(), ((Bout) m).getImage());
         }
     }

@@ -31,20 +31,20 @@ import static org.junit.jupiter.api.Assertions.*;
 class ServerTest {
 
     private static final String SERVER = "localhost";
-    private static final int PORT = 54321;
+    private static final int PORT = 12345;
     private static Socket clientSocket;
     private static MessageInput in;
     private static MessageOutput out;
-    private static final String BADID = "test";
-    private static final String ID = "robinson";
-    private static final String BADPASS = "bad";
+    private static final String BADID = "robinson";
+    private static final String ID = "test";
+    private static final String BADPASS = "test";
     private static Error IDERROR;
     private static Error PASSERROR;
     private static MessageDigest md;
 
     static {
         try {
-            IDERROR = new Error(500, "No such user test");
+            IDERROR = new Error(500, "No such user robinson");
             PASSERROR = new Error(500, "Unable to authenticate");
             md = MessageDigest.getInstance("MD5");
         } catch (ValidationException | NoSuchAlgorithmException ex) {
