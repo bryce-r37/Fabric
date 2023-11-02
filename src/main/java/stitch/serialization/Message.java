@@ -26,22 +26,22 @@ public abstract class Message {
     /**
      * Bit mask for version bit
      */
-    protected static final byte VERSION = (byte) 0b0010_1111;
+    protected static final byte VERSION = (byte) 0b0010_0000;
 
     /**
      * Bit mask for query bit
      */
-    protected static final byte QUERY = (byte) 0b1111_0111;
+    protected static final byte QUERY = (byte) 0b0000_0000;
 
     /**
      * Bit mask for response bit
      */
-    protected static final byte RESPONSE = (byte) 0b1111_1111;
+    protected static final byte RESPONSE = (byte) 0b0000_1000;
 
     /**
      * Bit mask for reserved bits
      */
-    protected static final byte RSRVD = (byte) 0b1111_1000;
+    protected static final byte RSRVD = (byte) 0b0000_0000;
 
     /**
      * Max unsigned 4 byte value (for encoding)
@@ -96,16 +96,16 @@ public abstract class Message {
             throw new CodeException(ErrorCode.PACKETTOOSHORT);
         }
         // check version (first four bits)
-        if (((buffer[0] | 0b01111) ^ VERSION) != 0) {
+        if (((buffer[0] & 0b1111_0000) ^ VERSION) != 0) {
             throw new CodeException(ErrorCode.BADVERSION);
         }
         // check type (fifth bit)
-        if ((query && ((byte) (buffer[0] | QUERY) ^ QUERY) != 0) ||
-                (!query && (((byte) (buffer[0] | QUERY) ^ RESPONSE) != 0))) {
+        if ((query && ((byte) (buffer[0] & 0b0_1000) ^ QUERY) != 0) ||
+                (!query && (((byte) (buffer[0] & 0b0_1000) ^ RESPONSE) != 0))) {
             throw new CodeException(ErrorCode.UNEXPECTEDPACKETTYPE);
         }
         // check reserved (last three bits)
-        if (((byte) (buffer[0] | 0b1111_1000) ^ RSRVD) != 0) {
+        if (((byte) (buffer[0] & 0b0111) ^ RSRVD) != 0) {
             throw new CodeException(ErrorCode.NETWORKERROR);
         }
         try {
@@ -144,7 +144,7 @@ public abstract class Message {
      */
     public byte[] encode() {
         byte[] header = new byte[6];
-        header[0] = (byte) (VERSION & RSRVD);
+        header[0] = (byte) (VERSION | RSRVD);
         header[2] = (byte) (this.queryID >> 24 & 0x0FF);
         header[3] = (byte) (this.queryID >> 16 & 0x0FF);
         header[4] = (byte) (this.queryID >> 8 & 0x0FF);

@@ -182,7 +182,7 @@ public class Response extends Message {
      * @return a byte array of the encoded data
      */
     protected byte[] encodeData(byte[] header) {
-        header[0] = (byte) (header[0] & Message.RESPONSE);
+        header[0] = (byte) (header[0] | Message.RESPONSE);
         header[1] = (byte) this.getErrorCode().getErrorCodeValue();
 
         int length = 0;

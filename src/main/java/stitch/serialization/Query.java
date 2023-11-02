@@ -123,7 +123,7 @@ public class Query extends Message {
      * @return a byte array of the encoded data
      */
     protected byte[] encodeData(byte[] header) {
-        header[0] = (byte) (header[0] & Message.QUERY);
+        header[0] = (byte) (header[0] | Message.QUERY);
         header[1] = 0;
 
         byte[] data = new byte[2];
