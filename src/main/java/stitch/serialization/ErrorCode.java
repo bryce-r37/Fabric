@@ -21,7 +21,7 @@ public enum ErrorCode {
     /**
      * Indicates a message with a bad version was received
      */
-    BADVERISON ("Bad version", 1),
+    BADVERSION ("Bad version", 1),
 
     /**
      * Indicates a message with an unexpected error code was received
@@ -81,7 +81,7 @@ public enum ErrorCode {
      * @return the value associated with the error code
      */
     public int getErrorCodeValue() {
-        return 0;
+        return this.code;
     }
 
     /**
@@ -90,7 +90,7 @@ public enum ErrorCode {
      * @return the message associated with the error code
      */
     public String getErrorMessage() {
-        return null;
+        return this.message;
     }
 
     /**
@@ -102,6 +102,18 @@ public enum ErrorCode {
      */
     public static ErrorCode getErrorCode(int errorCodeValue)
             throws IllegalArgumentException {
-        return null;
+        ErrorCode val;
+        switch (errorCodeValue) {
+            case 0 -> val = NOERROR;
+            case 1 -> val = BADVERSION;
+            case 2 -> val = UNEXPECTEDERRORCODE;
+            case 3 -> val = UNEXPECTEDPACKETTYPE;
+            case 4 -> val = PACKETTOOLONG;
+            case 5 -> val = PACKETTOOSHORT;
+            case 7 -> val = NETWORKERROR;
+            case 8 -> val = VALIDATIONERROR;
+            default -> throw new IllegalArgumentException("Error value out of range");
+        }
+        return val;
     }
 }

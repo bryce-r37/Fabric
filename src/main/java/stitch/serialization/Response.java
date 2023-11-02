@@ -8,12 +8,36 @@
 
 package stitch.serialization;
 
+import java.math.BigInteger;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Represents a Stitch response and performs serialization/deserialization
  */
 public class Response extends Message {
+
+    /**
+     * Max unsigned 1 byte value (for encoding)
+     */
+    private static final int MAXPOSTS = 0x0FF;
+
+    /**
+     * Max post length for 2 byte encoding
+     */
+    private static final int MAXLEN = 0x0FFFF;
+
+    /**
+     * Min length in bytes of Response packets
+     */
+    private static final int RLEN = 7;
+
+    /**
+     * Permitted format for posts (all printable ISO-8859-1 characters)
+     */
+    private static final String POSTFORMAT = "^[ -~¡-¬®-ÿ]*$";
 
     /**
      * Response error code
@@ -36,7 +60,9 @@ public class Response extends Message {
      */
     public Response(long queryID, ErrorCode errorCode, List<String> posts)
         throws IllegalArgumentException {
-
+        super(queryID);
+        this.errorCode = validateErrorCode(errorCode);
+        this.posts = validatePosts(posts);
     }
 
     /**
@@ -50,7 +76,40 @@ public class Response extends Message {
      * validation problems (VALIDATIONERROR)
      */
     public Response(byte[] buffer) throws CodeException {
-
+        super (buffer, false);
+        // set error code
+        try {
+            this.errorCode = ErrorCode.getErrorCode(buffer[1]);
+        } catch (IllegalArgumentException ex) {
+            throw new CodeException(ErrorCode.UNEXPECTEDERRORCODE, ex);
+        }
+        // check if packet too short
+        if (buffer.length < RLEN) {
+            throw new CodeException(ErrorCode.PACKETTOOSHORT);
+        }
+        int postCnt = buffer[RLEN - 1];
+        if (buffer.length < RLEN + 2 * postCnt) {
+            throw new CodeException(ErrorCode.PACKETTOOSHORT);
+        }
+        // set posts
+        if (buffer.length > RLEN) {
+            int next = RLEN;
+            List<String> posts = new ArrayList<>();
+            for (int i = 0; i < postCnt; ++i) {
+                int len = new BigInteger(buffer, next, 2).intValue();
+                next += 2;
+                String s = new String(buffer, next, len, Message.ENC);
+                if (!s.matches(POSTFORMAT)) {
+                    throw new CodeException(ErrorCode.VALIDATIONERROR);
+                }
+                posts.add(s);
+                next += len;
+            }
+            if (next != buffer.length) {
+                throw new CodeException(ErrorCode.PACKETTOOLONG);
+            }
+            this.posts = posts;
+        }
     }
 
     /**
@@ -59,7 +118,15 @@ public class Response extends Message {
      * @return a String representation
      */
     public String toString() {
-        return null;
+        StringBuilder response = new StringBuilder("Response: QueryID=" +
+                getQueryID() + " Error=" + getErrorCode().getErrorMessage()
+                .toUpperCase() + " Posts=" + posts.size() + ": ");
+        for (String post : posts) {
+            response.append(post);
+            response.append(", ");
+        }
+        response.delete(response.length() - 2, response.length());
+        return response.toString();
     }
 
     /**
@@ -68,7 +135,7 @@ public class Response extends Message {
      * @return current list of posts
      */
     public List<String> getPosts() {
-        return null;
+        return this.posts;
     }
 
     /**
@@ -82,6 +149,7 @@ public class Response extends Message {
      */
     public Response setPosts(List<String> posts)
             throws IllegalArgumentException {
+        this.posts = validatePosts(posts);
         return this;
     }
 
@@ -94,6 +162,7 @@ public class Response extends Message {
      */
     public Response setErrorCode(ErrorCode errorCode)
             throws IllegalArgumentException {
+        this.errorCode = validateErrorCode(errorCode);
         return this;
     }
 
@@ -103,6 +172,99 @@ public class Response extends Message {
      * @return error code
      */
     public ErrorCode getErrorCode() {
-        return null;
+        return this.errorCode;
+    }
+
+    /**
+     * Finishes encoding header and encodes data for a Message
+     *
+     * @param header the incomplete header encoding
+     * @return a byte array of the encoded data
+     */
+    protected byte[] encodeData(byte[] header) {
+        header[0] = (byte) (header[0] & Message.RESPONSE);
+        header[1] = (byte) this.getErrorCode().getErrorCodeValue();
+
+        int length = 0;
+        for (String post : posts) {
+            length += post.length();
+        }
+
+        ByteBuffer data = ByteBuffer.wrap(new byte[1 + length +
+                2 * posts.size()]);
+
+        data.put((byte) posts.size());
+
+        for (String post : posts) {
+            data.put((byte) (post.length() >> 8));
+            data.put((byte) (post.length() & 0b01111_1111));
+            data.put(post.getBytes(ENC));
+        }
+
+        return data.array();
+    }
+
+    /**
+     * Returns whether a Response is equal to Object o
+     *
+     * @param o second object to be compared
+     * @return boolean representation of whether object and Response are equal
+     */
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Response response)) return false;
+        if (!super.equals(o)) return false;
+        return this.errorCode == response.errorCode &&
+                Objects.equals(this.posts, response.posts);
+    }
+
+    /**
+     * Returns an integer hash of a Response for use in collections
+     *
+     * @return an integer hash representing the Response
+     */
+    @Override
+    public int hashCode() {
+        return Objects.hash(getQueryID(), errorCode, posts);
+    }
+
+    /**
+     * Validates the given ErrorCode
+     *
+     * @param errorCode the given ErrorCode
+     * @return the given ErrorCode
+     * @throws IllegalArgumentException if errorCode is null
+     */
+    private ErrorCode validateErrorCode(ErrorCode errorCode)
+            throws IllegalArgumentException {
+        if (errorCode == null) {
+            throw new IllegalArgumentException("Null ErrorCode");
+        }
+        return errorCode;
+    }
+
+    /**
+     * Validate the new list of posts
+     *
+     * @param posts new list of posts
+     * @return new list of posts
+     * @throws IllegalArgumentException if (list is null or outside length
+     * range) OR (an individual post is null, outside length range, or post
+     * contains illegal characters)
+     */
+    private List<String> validatePosts(List<String> posts)
+            throws IllegalArgumentException {
+        if (posts == null || posts.size() > MAXPOSTS) {
+            throw new IllegalArgumentException("Bad post list");
+        }
+        for (String post : posts) {
+            if (post == null || post.length() > MAXLEN ||
+                    !post.matches(POSTFORMAT)) {
+                throw new IllegalArgumentException("Bad post in list (" +
+                        posts.indexOf(post) + "): " + post);
+            }
+        }
+        return posts;
     }
 }
