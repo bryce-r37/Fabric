@@ -77,7 +77,7 @@ public class Query extends Message {
         // check requested post number
         try {
             this.requestedPosts = validateRequestedPosts(
-                    new BigInteger(buffer, 6, 2).intValue());
+                    new BigInteger(buffer, 6, 2).shortValue() & MAXPOSTS);
         } catch (IllegalArgumentException ex) {
             throw new CodeException(ErrorCode.VALIDATIONERROR, ex);
         }

@@ -8,6 +8,8 @@
 
 package stitch.serialization;
 
+import java.util.Arrays;
+
 /**
  * Allowable error codes with associated numeric values and error messages.
  */
@@ -102,18 +104,9 @@ public enum ErrorCode {
      */
     public static ErrorCode getErrorCode(int errorCodeValue)
             throws IllegalArgumentException {
-        ErrorCode val;
-        switch (errorCodeValue) {
-            case 0 -> val = NOERROR;
-            case 1 -> val = BADVERSION;
-            case 2 -> val = UNEXPECTEDERRORCODE;
-            case 3 -> val = UNEXPECTEDPACKETTYPE;
-            case 4 -> val = PACKETTOOLONG;
-            case 5 -> val = PACKETTOOSHORT;
-            case 7 -> val = NETWORKERROR;
-            case 8 -> val = VALIDATIONERROR;
-            default -> throw new IllegalArgumentException("Error value out of range");
-        }
-        return val;
+        return Arrays.stream(ErrorCode.values()).filter(e ->
+                e.getErrorCodeValue() == errorCodeValue).findFirst()
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Error value out of range"));
     }
 }

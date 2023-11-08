@@ -40,8 +40,8 @@ public class CodeException extends Exception {
      */
     public CodeException(ErrorCode errorCode, Throwable cause)
             throws NullPointerException {
-        super(cause);
-        this.errorCode = Objects.requireNonNull(errorCode);
+        super(Objects.requireNonNull(errorCode).getErrorMessage(), cause);
+        this.errorCode = errorCode;
     }
 
     /**

@@ -109,8 +109,8 @@ public abstract class Message {
             throw new CodeException(ErrorCode.NETWORKERROR);
         }
         try {
-            this.queryID = validateQueryID(new BigInteger(buffer, 2, 4)
-                    .longValue());
+            this.queryID = validateQueryID( new BigInteger(buffer, 2, 4)
+                    .intValue() & MAXQID);
         } catch (IllegalArgumentException ex) {
             throw new CodeException(ErrorCode.VALIDATIONERROR, ex);
         }

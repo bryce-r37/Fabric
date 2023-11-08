@@ -87,29 +87,33 @@ public class Response extends Message {
         if (buffer.length < RLEN) {
             throw new CodeException(ErrorCode.PACKETTOOSHORT);
         }
-        int postCnt = buffer[RLEN - 1];
+        int postCnt = buffer[RLEN - 1] & MAXPOSTS;
         if (buffer.length < RLEN + 2 * postCnt) {
             throw new CodeException(ErrorCode.PACKETTOOSHORT);
         }
         // set posts
-        if (buffer.length > RLEN) {
-            int next = RLEN;
-            List<String> posts = new ArrayList<>();
-            for (int i = 0; i < postCnt; ++i) {
-                int len = new BigInteger(buffer, next, 2).intValue();
-                next += 2;
-                String s = new String(buffer, next, len, Message.ENC);
-                if (!s.matches(POSTFORMAT)) {
-                    throw new CodeException(ErrorCode.VALIDATIONERROR);
-                }
-                posts.add(s);
-                next += len;
+        int next = RLEN;
+        List<String> posts = new ArrayList<>();
+        for (int i = 0; i < postCnt; ++i) {
+            if (next + 2 > buffer.length) {
+                throw new CodeException(ErrorCode.PACKETTOOSHORT);
             }
-            if (next != buffer.length) {
-                throw new CodeException(ErrorCode.PACKETTOOLONG);
+            int len = new BigInteger(buffer, next, 2).shortValue() & 0x0FFFF;
+            next += 2;
+            if (next + len > buffer.length) {
+                throw new CodeException(ErrorCode.PACKETTOOSHORT);
             }
-            this.posts = posts;
+            String s = new String(buffer, next, len, Message.ENC);
+            if (!s.matches(POSTFORMAT)) {
+                throw new CodeException(ErrorCode.VALIDATIONERROR);
+            }
+            posts.add(s);
+            next += len;
         }
+        if (next != buffer.length) {
+            throw new CodeException(ErrorCode.PACKETTOOLONG);
+        }
+        this.posts = posts;
     }
 
     /**
@@ -119,8 +123,8 @@ public class Response extends Message {
      */
     public String toString() {
         StringBuilder response = new StringBuilder("Response: QueryID=" +
-                getQueryID() + " Error=" + getErrorCode().getErrorMessage()
-                .toUpperCase() + " Posts=" + posts.size() + ": ");
+                getQueryID() + " Error=" + getErrorCode().getErrorCodeValue() +
+                " Posts=" + posts.size() + ": ");
         for (String post : posts) {
             response.append(post);
             response.append(", ");

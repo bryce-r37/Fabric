@@ -43,16 +43,16 @@ class ResponseTest {
     private static final List<String> GOODPOSTS = new ArrayList<>(
             Arrays.asList("test1", "test2", "test3"));
     private static final List<String> BADPOST = new ArrayList<>(
-            Arrays.asList("test1", "test2\r", "test3"));
+            Arrays.asList("test1", "test2ã", "test3"));
     private static final List<String> NULLPOST = new ArrayList<>(
             Arrays.asList("test1", null, "test3"));
     private static final List<String> LARGELIST = new ArrayList<>();
     private static final String RSTRING = "Response: QueryID=1 Error=" +
-            "NO ERROR Posts=3: test1, test2, test3";
+            "0 Posts=3: test1, test2, test3";
 
 
     static {
-        RESPONSE = new Response(1, ErrorCode.NOERROR, GOODPOSTS);
+        RESPONSE = new Response(0x0FFFFFFFFL, ErrorCode.NOERROR, GOODPOSTS);
         RESPONSE2 = new Response(100, ErrorCode.NETWORKERROR, new ArrayList<>());
         RESPONSE3 = new Response(1, ErrorCode.NOERROR, GOODPOSTS);
         RESPONSE4 = new Response(100, ErrorCode.NETWORKERROR, new ArrayList<>());
@@ -74,6 +74,7 @@ class ResponseTest {
         VERSRENC[0] = 0b0110_0000;
         ERRRENC[1] = 6;
         RENC[5] = 1;
+        RENC[2] = RENC[3] = RENC[4] = RENC[5] = -1;
         for (int i = 0; i < 0x0101; ++i) {
             LARGELIST.add("string");
         }
