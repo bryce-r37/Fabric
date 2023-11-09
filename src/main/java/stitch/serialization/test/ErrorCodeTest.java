@@ -1,3 +1,11 @@
+/************************************************
+ *
+ * Author: Bryce Robinson
+ * Assignment: Program 5
+ * Class: CSI 4321
+ *
+ ************************************************/
+
 package stitch.serialization.test;
 
 import org.junit.jupiter.api.Nested;
