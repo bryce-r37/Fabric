@@ -3,6 +3,9 @@ target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 javadoc/
+passwords.txt
+*.log
+*.html
 
 ### IntelliJ IDEA ###
 .idea/modules.xml

@@ -22,7 +22,7 @@ public class Response extends Message {
     /**
      * Max unsigned 1 byte value (for encoding)
      */
-    private static final int MAXPOSTS = 0x0FF;
+    public static final int MAXPOSTS = 0x0FF;
 
     /**
      * Max post length for 2 byte encoding
@@ -32,7 +32,7 @@ public class Response extends Message {
     /**
      * Min length in bytes of Response packets
      */
-    private static final int RLEN = 7;
+    public static final int RLEN = 7;
 
     /**
      * Permitted format for posts (all printable ISO-8859-1 characters)

@@ -78,7 +78,7 @@ public class Server extends MessageSender {
     static {
         logger.setLevel(Level.FINE);
         try {
-            FileHandler file = new FileHandler(SERVERLOGS, true);
+            FileHandler file = new FileHandler(SERVERLOGS);
             file.setFormatter(new SimpleFormatter());
             logger.addHandler(file);
             logger.setUseParentHandlers(false);
@@ -123,6 +123,11 @@ public class Server extends MessageSender {
             System.exit(1);
         }
 
+        stitch.app.server.Server sServer =
+                new stitch.app.server.Server(Integer.parseInt(args[0]));
+        Thread stitch = new Thread(sServer);
+        stitch.start();
+
         // Open server socket and wait for client connections
         try ( ServerSocket serverSocket = new ServerSocket(
                     Integer.parseInt(args[0]));
@@ -136,7 +141,7 @@ public class Server extends MessageSender {
                             client.getInetAddress().getHostAddress() + ":" +
                             client.getPort());
                     // Delegate client to thread
-                    threads.submit(() -> run(client));
+                    threads.submit(() -> run(client, sServer));
                 } catch (IOException ex) {
                     logger.warning(() -> "Unable to communicate: " +
                             ex.getMessage());
@@ -153,7 +158,7 @@ public class Server extends MessageSender {
      *
      * @param client Socket hosting client connection
      */
-    private static void run(Socket client) {
+    private static void run(Socket client, stitch.app.server.Server sServer) {
         MessageInput in;
         MessageOutput out;
         try {
@@ -228,7 +233,7 @@ public class Server extends MessageSender {
 
         // Process received Bout or Knowp
         try {
-            postMessage(m, userID);
+            postMessage(m, userID, sServer);
             logger.fine(() -> "Posted message from client at " + addr);
         } catch (IOException ex) {
             sendServerError(out, POSTERR, "Could not post message", client);
@@ -317,16 +322,22 @@ public class Server extends MessageSender {
      * @param userID id of user who sent m
      * @throws IOException if I/O problem in post
      */
-    private static synchronized void postMessage(Message m, String userID) throws IOException {
+    private static synchronized void postMessage(
+            Message m, String userID, stitch.app.server.Server sServer)
+            throws IOException {
         if (m instanceof fabric.serialization.Knowp) {
             // update user sequence number and write Knowp to output
             users.update(userID);
             y.update(userID + ": KNOWP " +
                     users.getSequence(userID));
+            sServer.addPost(userID + ": KNOWP " +
+                    users.getSequence(userID));
         } else {
             // write Bout to output
             y.updateWithImage(userID + ": BOUT #" +
                     ((Bout) m).getCategory(), ((Bout) m).getImage());
+            sServer.addPost(userID + ": BOUT #" +
+                    ((Bout) m).getCategory());
         }
     }
 

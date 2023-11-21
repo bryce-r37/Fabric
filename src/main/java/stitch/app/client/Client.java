@@ -39,7 +39,7 @@ public class Client {
     /**
      * Max payload size for UDP packet
      */
-    private static final int UDPMAX = 65507;
+    public static final int UDPMAX = 65507;
 
     /**
      * Random number generator for queryIDs
