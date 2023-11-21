@@ -24,7 +24,7 @@ import static stitch.app.client.Client.UDPMAX;
 import static stitch.serialization.Response.RLEN;
 
 /**
- *
+ * Stitch server implementation (runs as a thread in Fabric Server)
  */
 public class Server implements Runnable {
 
@@ -38,6 +38,9 @@ public class Server implements Runnable {
      */
     private final List<String> posts;
 
+    /**
+     * Static Stitch Server logger
+     */
     private static final Logger logger = Logger.getLogger("stitchServer");
 
     /**
@@ -45,6 +48,7 @@ public class Server implements Runnable {
      */
     private static final String STITCHLOG = "stitch.log";
 
+    // static logger initialization
     static {
         logger.setLevel(Level.FINE);
         try {
@@ -68,6 +72,11 @@ public class Server implements Runnable {
         this.posts = new ArrayList<>();
     }
 
+    /**
+     * Adds a new post to the Stitch Server list
+     *
+     * @param post String representation of new post
+     */
     public void addPost(String post) {
         posts.add(post);
     }
@@ -119,6 +128,15 @@ public class Server implements Runnable {
         }
     }
 
+    /**
+     * Receives a query from the given socket into the given packet and returns
+     * a deserialized representation
+     *
+     * @param socket the socket to receive from
+     * @param packet the packet to receive into
+     * @return the received Query
+     * @throws CodeException if invalid Query
+     */
     private Query receiveQuery(DatagramSocket socket, DatagramPacket packet)
             throws CodeException {
         try {
@@ -132,6 +150,14 @@ public class Server implements Runnable {
         return new Query(data);
     }
 
+    /**
+     * Generates a Response with the appropriate size post list to be
+     * serialized for transmission to client
+     *
+     * @param requestedPosts number of posts client has requested
+     * @param queryID queryID for Client Query
+     * @return the generated Response
+     */
     private Response generateResponse(int requestedPosts, long queryID) {
         int count = Math.min(requestedPosts, posts.size());
         List<String> subset = posts.subList(0, count);
